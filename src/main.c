@@ -321,6 +321,11 @@ int main(int argc, char **argv) {
         printf("  sessions, the saved channel list and chat logs go here\n");
         printf("yt-dlp:     %s\n", vs_ytdlp_cmd());
         printf("python:     %s\n", vs_python_cmd());
+        char mpvinfo[1024];
+        vs_player_build_info(mpvinfo, sizeof mpvinfo);
+        printf("libmpv:     %s\n", mpvinfo);
+        printf("  mpv is GPLv2+ unless built with -Dgpl=false; that decides\n"
+               "  what distributing a binary bundled with it requires\n");
         printf("  chat replay needs python; playback does not\n");
         return 0;
     }

@@ -6,7 +6,7 @@
 #define VS_VERSION_H
 
 #define VS_VER_MAJOR 0
-#define VS_VER_MINOR 10
+#define VS_VER_MINOR 11
 #define VS_VER_PATCH 0
 #define VS_VER_STR   "0.10.0"
 

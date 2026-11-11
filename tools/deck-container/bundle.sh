@@ -218,6 +218,13 @@ exec "$here/vodsync" "$@"
 EOF
 chmod +x "$OUT/vodsync.sh"
 
+# Verifying this bundle runs python from inside it, which leaves
+# __pycache__ directories behind. They have reached the shipped archive
+# twice, caught by hand both times. Swept here so the tar cannot carry them
+# however the bundle was exercised, and before the size below is measured.
+find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
+find "$OUT" -name '*.pyc' -delete 2>/dev/null || true
+
 echo
 echo "bundle at $OUT  ($(du -sh "$OUT" | cut -f1))"
 echo "copy it to the Deck, add vodsync.sh to Steam as a non-Steam game."

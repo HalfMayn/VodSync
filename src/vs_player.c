@@ -116,6 +116,31 @@ static bool manifest_is_concat(const char *path) {
     return n > 9 && strcmp(path + n - 9, ".ffconcat") == 0;
 }
 
+void vs_player_build_info(char *out, int cap) {
+    if (cap > 0) out[0] = 0;
+    mpv_handle *m = mpv_create();
+    if (!m) { snprintf(out, cap, "mpv_create failed"); return; }
+    // No output of any kind: this handle exists to be asked three questions
+    // and thrown away, and it must not grab an audio device to do it.
+    mpv_set_option_string(m, "vo", "null");
+    mpv_set_option_string(m, "ao", "null");
+    if (mpv_initialize(m) < 0) {
+        mpv_destroy(m);
+        snprintf(out, cap, "mpv_initialize failed");
+        return;
+    }
+    char *ver = mpv_get_property_string(m, "mpv-version");
+    char *cfg = mpv_get_property_string(m, "mpv-configuration");
+    char *ff  = mpv_get_property_string(m, "ffmpeg-version");
+    snprintf(out, cap, "%s\n  built with: %s\n  ffmpeg:     %s",
+             ver ? ver : "(unknown)", cfg ? cfg : "(not reported)",
+             ff ? ff : "(not reported)");
+    if (ver) mpv_free(ver);
+    if (cfg) mpv_free(cfg);
+    if (ff)  mpv_free(ff);
+    mpv_terminate_destroy(m);
+}
+
 bool vs_player_open(vs_source *s) {
     if (s->gpu) return true;
     if (s->role != VS_ROLE_VIDEO || !s->manifest[0]) return false;

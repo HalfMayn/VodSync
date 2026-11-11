@@ -5,6 +5,13 @@
 #include "raylib.h"
 
 bool vs_player_open(vs_source *s);
+
+// Which libmpv this copy is running against, and the arguments it was built
+// with. Needed because mpv is GPLv2+ by default and LGPLv2+ only when built
+// with -Dgpl=false, and that difference decides what distributing a binary
+// bundled with it obliges you to do. Creates a throwaway handle with no
+// video or audio output, so it is safe to call before any window exists.
+void vs_player_build_info(char *out, int cap);
 void vs_player_close(vs_source *s);
 void vs_player_poll(vs_source *s);                 // drain events, read time-pos
 void vs_player_render(vs_source *s, int w, int h); // render a frame into the FBO
