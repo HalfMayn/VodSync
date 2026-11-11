@@ -242,16 +242,39 @@ def build_app():
 
 
 def app_version():
-    """The version, read from the one place that defines it.
+    """The version, computed from the numbers in vs_version.h.
 
     The .rc compiles the same header into the exe's VERSIONINFO, so passing
     this to iscc keeps the installer, the binary and the header from ever
     disagreeing - which is the failure you only notice after shipping.
+
+    The header says the version twice: VS_VER_MAJOR/MINOR/PATCH for the
+    numeric VERSIONINFO fields, and VS_VER_STR for the string ones and the
+    installer's filename. The numbers win, and a disagreeing VS_VER_STR is
+    an error rather than a warning - bumping only the numbers once produced
+    an exe stamped 0.11.0 inside an installer called 0.10.0.
     """
     import re
-    m = re.search(r'#define\s+VS_VER_STR\s+"([^"]+)"',
-                  VERSION_H.read_text(encoding="utf-8"))
-    return m.group(1) if m else None
+    txt = VERSION_H.read_text(encoding="utf-8")
+    nums = []
+    for part in ("MAJOR", "MINOR", "PATCH"):
+        m = re.search(r"#define\s+VS_VER_" + part + r"\s+(\d+)", txt)
+        if not m:
+            print(f"*** vs_version.h has no VS_VER_{part}")
+            return None
+        nums.append(m.group(1))
+    ver = ".".join(nums)
+
+    m = re.search(r'#define\s+VS_VER_STR\s+"([^"]+)"', txt)
+    if not m:
+        print("*** vs_version.h has no VS_VER_STR")
+        return None
+    if m.group(1) != ver:
+        print(f"*** vs_version.h disagrees with itself: the numbers say "
+              f"{ver}, VS_VER_STR says {m.group(1)}.")
+        print(f"    Set VS_VER_STR to \"{ver}\" and build again.")
+        return None
+    return ver
 
 
 def find_iscc():
@@ -292,7 +315,9 @@ def build_installer():
         return False
     ver = app_version()
     if not ver:
-        print(f"*** no VS_VER_STR in {VERSION_H}")
+        # app_version has already said exactly what is wrong - a missing
+        # define or the two spellings of the version disagreeing. Restating
+        # a guessed cause here is how the real one gets buried.
         return False
     iscc = find_iscc()
     if not iscc:
