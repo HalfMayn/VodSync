@@ -218,13 +218,64 @@ exec "$here/vodsync" "$@"
 EOF
 chmod +x "$OUT/vodsync.sh"
 
-# Verifying this bundle runs python from inside it, which leaves
-# __pycache__ directories behind. They have reached the shipped archive
-# twice, caught by hand both times. Swept here so the tar cannot carry them
-# however the bundle was exercised, and before the size below is measured.
+# Running python from inside the bundle leaves __pycache__ behind, and that
+# has reached the shipped archive twice - caught by hand both times. The
+# archive is built below, before anything has had a chance to run python in
+# this directory, so this sweep is for a dist left polluted by an earlier
+# round rather than by this one.
 find "$OUT" -name __pycache__ -type d -prune -exec rm -rf {} + 2>/dev/null || true
 find "$OUT" -name '*.pyc' -delete 2>/dev/null || true
 
 echo
 echo "bundle at $OUT  ($(du -sh "$OUT" | cut -f1))"
+
+# ---- the shippable archive ---------------------------------------------
+# This belongs here and not in a script kept beside the repository: the tar
+# is what actually ships, and these checks are the ones worth never
+# skipping. VODSYNC_TAR=0 skips it while iterating, because gzipping a third
+# of a gigabyte is not wanted on every build.
+if [ "${VODSYNC_TAR:-1}" = "1" ]; then
+    PARENT=$(dirname "$OUT")
+    NAME=$(basename "$OUT")
+    TAR="$PARENT/vodsync-deck.tar.gz"
+    echo
+    echo "=== packing $TAR ==="
+
+    # Written to .new and moved into place only once it lists and verifies,
+    # so a half-written or wrong archive never replaces a good one.
+    ( cd "$PARENT" && tar czf vodsync-deck.tar.gz.new "$NAME" )
+    tar tzf "$TAR.new" > /tmp/vs-tar-entries.txt
+
+    echo "  bytes:   $(ls -l "$TAR.new" | awk '{print $5}')"
+    echo "  entries: $(wc -l < /tmp/vs-tar-entries.txt)"
+    echo "  libs:    $(grep -c '/lib/' /tmp/vs-tar-entries.txt || true)"
+
+    pyc=$(grep -c '__pycache__' /tmp/vs-tar-entries.txt || true)
+    echo "  pycache: $pyc"
+    if [ "$pyc" != "0" ]; then
+        echo "*** __pycache__ inside the archive; leaving the old one in place"
+        exit 1
+    fi
+
+    # The binary inside has to be the one this bundle was built around.
+    # An archive carrying a different build looks like nothing at all until
+    # it refuses to start on the Deck.
+    rm -rf /tmp/vs-tarcheck
+    mkdir -p /tmp/vs-tarcheck
+    tar xzf "$TAR.new" -C /tmp/vs-tarcheck "$NAME/vodsync"
+    inner=$(md5sum "/tmp/vs-tarcheck/$NAME/vodsync" | cut -d' ' -f1)
+    outer=$(md5sum "$BIN" | cut -d' ' -f1)
+    echo "  archive binary: $inner"
+    echo "  bundled binary: $outer"
+    if [ "$inner" != "$outer" ]; then
+        echo "*** the archive holds a different binary; leaving the old one in place"
+        exit 1
+    fi
+    echo "  glibc floor: $(objdump -T "/tmp/vs-tarcheck/$NAME/vodsync" \
+        | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1)"
+
+    mv -f "$TAR.new" "$TAR"
+    echo "  replaced $TAR"
+fi
+
 echo "copy it to the Deck, add vodsync.sh to Steam as a non-Steam game."
