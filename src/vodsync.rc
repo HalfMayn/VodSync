@@ -1,0 +1,41 @@
+// vodsync - executable resources.
+//
+// SetWindowIcons covers the window and taskbar at runtime; this is what makes
+// Explorer show the mark on vodsync.exe itself. The .ico is generated - see
+// "python tools/build.py icon".
+//
+// The VERSIONINFO block is what Explorer's Details tab reads, and what an
+// installer reads to name the thing it is installing. Without it both are
+// blank, which is also one of the several reasons SmartScreen distrusts a
+// binary. The numbers come from vs_version.h so there is one place to edit.
+#include <winver.h>
+#include "vs_version.h"
+
+1 ICON "vodsync.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION    VS_VER_MAJOR,VS_VER_MINOR,VS_VER_PATCH,0
+ PRODUCTVERSION VS_VER_MAJOR,VS_VER_MINOR,VS_VER_PATCH,0
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
+ FILEFLAGS      0
+ FILEOS         VOS_NT_WINDOWS32
+ FILETYPE       VFT_APP
+ FILESUBTYPE    VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"          // US English, Unicode
+        BEGIN
+            VALUE "FileDescription",  "vodsync - several VODs on one clock"
+            VALUE "FileVersion",      VS_VER_STR
+            VALUE "InternalName",     "vodsync"
+            VALUE "OriginalFilename", "vodsync.exe"
+            VALUE "ProductName",      "vodsync"
+            VALUE "ProductVersion",   VS_VER_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 0x4B0
+    END
+END

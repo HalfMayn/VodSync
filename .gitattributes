@@ -1,0 +1,13 @@
+# Line endings are pinned here rather than left to whatever core.autocrlf a
+# clone happens to have. This project's shell scripts are run under WSL and
+# inside a Steam Runtime container from a Windows checkout, and a script
+# checked out with CRLF fails there with "bad interpreter" - a confusing
+# failure a long way from its cause.
+* text=auto
+
+# Must be LF wherever they are checked out.
+*.sh        text eol=lf
+Dockerfile* text eol=lf
+
+# Inno Setup is Windows-only and conventionally CRLF.
+*.iss       text eol=crlf

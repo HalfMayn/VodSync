@@ -1,0 +1,28 @@
+# vodsync - SteamOS desktop session lookalike.
+#
+# SteamOS 3 is Arch with Valve's own repos on top, so plain Arch is the
+# closest thing to the environment a non-Steam app launched from Game Mode
+# or Desktop Mode actually runs in: same pacman packages, same mpv, same
+# Mesa generation. Use this to reproduce something that involves the
+# system's own libraries.
+#
+# To ship a binary, prefer the sniper SDK in ./Dockerfile - Arch's glibc is
+# newer than the Deck's and a binary built here can fail to start there.
+#
+#   docker build -f tools/deck-container/Dockerfile.arch -t vodsync-arch \
+#       tools/deck-container
+#   docker run --rm -v "$PWD":/src -w /src vodsync-arch \
+#       python3 tools/build_linux.py all
+FROM archlinux:latest
+
+RUN pacman -Syu --noconfirm \
+        base-devel clang pkgconf python \
+        raylib mpv curl \
+        mesa libglvnd libva libva-mesa-driver \
+        libx11 libxrandr libxinerama libxcursor libxi \
+        wayland wayland-protocols libxkbcommon \
+        yt-dlp ttf-dejavu \
+    && pacman -Scc --noconfirm
+
+WORKDIR /src
+CMD ["python3", "tools/build_linux.py", "all"]

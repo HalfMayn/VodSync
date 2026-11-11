@@ -1,0 +1,29 @@
+# build output (includes copied libmpv-2.dll and selftest screenshots)
+build/
+
+# vendored binaries - fetched by hand, see NOTES.md "Vendored patches"
+third_party/raylib/
+third_party/twitchdownloader/
+third_party/yt-dlp/
+third_party/mpv/libmpv-2.dll
+third_party/mpv/libmpv.dll.a
+
+# saved sessions and generated chat logs
+# generated: python tools/build.py icon
+src/vodsync.ico
+*.session
+vodsync.autosave
+vodsync.channels
+*.vodsync.tsv
+chat_*.tsv
+selftest.png
+
+# Linux/Deck build output, including the 300MB bundled folder
+build-linux/
+# build-dev, build-dev2, any scratch build dir
+build-dev*/
+
+# python bytecode: it has reached a shipped bundle twice, so it is listed
+# rather than left to be noticed
+__pycache__/
+*.pyc
